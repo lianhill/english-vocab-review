@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Suite - 中考英语词汇40天复习工具</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #e0e0e0; }
+        .pass { color: #4CAF50; }
+        .fail { color: #F44336; font-weight: bold; }
+        .warn { color: #FF9800; }
+        .info { color: #2196F3; }
+        h1 { color: #FFD700; }
+        h2 { color: #81C784; margin-top: 24px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .summary { background: #16213e; padding: 16px; border-radius: 8px; margin: 16px 0; }
+        .test-item { padding: 4px 0; }
+        .bug { background: #3d0000; padding: 12px; border-radius: 8px; margin: 8px 0; border-left: 4px solid #F44336; }
+        #test-frame { display: none; }
+    </style>
+</head>
+<body>
+    <h1>QA Test Report - 中考英语词汇40天复习工具</h1>
+    <div id="results"></div>
+    <iframe id="test-frame" src="english-vocab-review.html" style="width:400px;height:700px;border:1px solid #333;"></iframe>
+
+    <script>
+    // ==========================================
+    // Test Framework
+    // ==========================================
+    const results = { passed: 0, failed: 0, warnings: 0, tests: [], bugs: [] };
+
+    function assert(condition, testName, detail) {
+        if (condition) {
+            results.passed++;
+            results.tests.push({ name: testName, status: 'PASS', detail: detail || '' });
+        } else {
+            results.failed++;
+            results.tests.push({ name: testName, status: 'FAIL', detail: detail || '' });
+        }
+    }
+
+    function warn(condition, testName, detail) {
+        if (!condition) {
+            results.warnings++;
+            results.tests.push({ name: testName, status: 'WARN', detail: detail || '' });
+        } else {
+            results.passed++;
+            results.tests.push({ name: testName, status: 'PASS', detail: detail || '' });
+        }
+    }
+
+    function addBug(severity, description, location) {
+        results.bugs.push({ severity, description, location });
+    }
+
+    // ==========================================
+    // Test Execution
+    // ==========================================
+    function runTests() {
+        const frame = document.getElementById('test-frame');
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        const win = frame.contentWindow;
+
+        // ===== 1. STRUCTURE / DOM TESTS =====
+        results.tests.push({ name: '--- 结构和DOM测试 ---', status: 'SECTION' });
+
+        // 1.1 Main tabs exist
+        assert(!!doc.getElementById('tab-home'), '1.1 首页Tab存在');
+        assert(!!doc.getElementById('tab-learn'), '1.2 学习Tab存在');
+        assert(!!doc.getElementById('tab-test'), '1.3 测试Tab存在');
+        assert(!!doc.getElementById('tab-achievements'), '1.4 成就Tab存在');
+        assert(!!doc.getElementById('tab-profile'), '1.5 我的Tab存在');
+
+        // 1.2 Bottom nav exists
+        const navItems = doc.querySelectorAll('.nav-item');
+        assert(navItems.length === 5, '1.6 底部导航有5个按钮', `实际: ${navItems.length}`);
+
+        // 1.3 Active tab is home by default
+        const activeTab = doc.querySelector('.tab-content.active');
+        assert(activeTab && activeTab.id === 'tab-home', '1.7 默认激活首页Tab');
+
+        // 1.4 Home page elements
+        assert(!!doc.getElementById('daysLeft'), '1.8 倒计时元素存在');
+        assert(!!doc.getElementById('taskProgress'), '1.9 今日任务进度元素存在');
+        assert(!!doc.getElementById('dailyProgressBar'), '1.10 每日进度条元素存在');
+        assert(!!doc.getElementById('statLearned'), '1.11 已掌握统计元素存在');
+        assert(!!doc.getElementById('statReview'), '1.12 待复习统计元素存在');
+        assert(!!doc.getElementById('statStreak'), '1.13 连续天数元素存在');
+        assert(!!doc.getElementById('statAccuracy'), '1.14 正确率元素存在');
+        assert(!!doc.getElementById('calendar'), '1.15 学习日历元素存在');
+
+        // 1.5 Learn mode elements
+        assert(!!doc.getElementById('mode-cards'), '1.16 单词卡片模式元素存在');
+        assert(!!doc.getElementById('mode-spelling'), '1.17 拼写训练模式元素存在');
+        assert(!!doc.getElementById('mode-dictation'), '1.18 听写模式元素存在');
+        assert(!!doc.getElementById('mode-review'), '1.19 复习模式元素存在');
+
+        // 1.6 Word card elements
+        assert(!!doc.getElementById('wordCard'), '1.20 单词卡片元素存在');
+        assert(!!doc.getElementById('displayWord'), '1.21 单词显示元素存在');
+        assert(!!doc.getElementById('displayPhonetic'), '1.22 音标显示元素存在');
+        assert(!!doc.getElementById('displayPart'), '1.23 词性显示元素存在');
+        assert(!!doc.getElementById('displayMeaning'), '1.24 释义显示元素存在');
+        assert(!!doc.getElementById('displaySentence'), '1.25 例句显示元素存在');
+        assert(!!doc.getElementById('prevWord'), '1.26 上一词按钮存在');
+        assert(!!doc.getElementById('nextWord'), '1.27 下一词按钮存在');
+        assert(!!doc.getElementById('wordCounter'), '1.28 卡片计数器存在');
+        assert(!!doc.getElementById('btnFavorite'), '1.29 收藏按钮存在');
+        assert(!!doc.getElementById('btnLearned'), '1.30 已掌握按钮存在');
+
+        // 1.7 Test mode elements
+        assert(!!doc.getElementById('testSetup'), '1.31 测试设置面板存在');
+        assert(!!doc.getElementById('testContent'), '1.32 测试内容面板存在');
+        assert(!!doc.getElementById('testResults'), '1.33 测试结果面板存在');
+
+        // 1.8 Achievement elements
+        assert(!!doc.getElementById('achievementLearning'), '1.34 学习成就容器存在');
+        assert(!!doc.getElementById('achievementQuantity'), '1.35 数量成就容器存在');
+        assert(!!doc.getElementById('achievementAccuracy'), '1.36 正确率成就容器存在');
+        assert(!!doc.getElementById('achievementReview'), '1.37 复习成就容器存在');
+        assert(!!doc.getElementById('achievementSpecial'), '1.38 特别成就容器存在');
+        assert(!!doc.getElementById('achievementCount'), '1.39 成就计数器存在');
+        assert(!!doc.getElementById('achievementPopup'), '1.40 成就弹窗存在');
+
+        // 1.9 Profile elements
+        assert(!!doc.getElementById('profileDays'), '1.41 学习天数元素存在');
+        assert(!!doc.getElementById('profileWords'), '1.42 掌握单词数元素存在');
+        assert(!!doc.getElementById('profileMinutes'), '1.43 学习分钟数元素存在');
+
+        // ===== 2. VOCABULARY DATA TESTS =====
+        results.tests.push({ name: '--- 词汇数据测试 ---', status: 'SECTION' });
+
+        assert(typeof win.VOCABULARY !== 'undefined', '2.1 VOCABULARY数据已定义');
+        assert(Array.isArray(win.VOCABULARY), '2.2 VOCABULARY是数组');
+        assert(win.VOCABULARY.length === 87, '2.3 词汇数量为87个', `实际: ${win.VOCABULARY.length}`);
+
+        // Validate vocabulary structure
+        if (win.VOCABULARY.length > 0) {
+            const first = win.VOCABULARY[0];
+            assert(first.word === 'abandon', '2.4 第一个单词是abandon');
+            assert(typeof first.phonetic === 'string' && first.phonetic.length > 0, '2.5 音标格式正确');
+            assert(typeof first.part === 'string' && first.part.length > 0, '2.6 词性格式正确');
+            assert(typeof first.meaning === 'string' && first.meaning.length > 0, '2.7 释义格式正确');
+            assert(typeof first.sentence === 'string' && first.sentence.length > 0, '2.8 例句格式正确');
+
+            // Check for duplicate words
+            const words = win.VOCABULARY.map(v => v.word);
+            const uniqueWords = new Set(words);
+            assert(words.length === uniqueWords.size, '2.9 无重复单词', `唯一: ${uniqueWords.size}, 总数: ${words.length}`);
+
+            // Check all words have required fields
+            let allValid = true;
+            let invalidEntries = [];
+            win.VOCABULARY.forEach((v, i) => {
+                if (!v.word || !v.phonetic || !v.meaning || !v.sentence) {
+                    allValid = false;
+                    invalidEntries.push(i);
+                }
+            });
+            assert(allValid, '2.10 所有单词字段完整', invalidEntries.length > 0 ? `缺失索引: ${invalidEntries.join(',')}` : '');
+        }
+
+        // ===== 3. ACHIEVEMENTS DATA TESTS =====
+        results.tests.push({ name: '--- 成就系统数据测试 ---', status: 'SECTION' });
+
+        assert(typeof win.ACHIEVEMENTS !== 'undefined', '3.1 ACHIEVEMENTS数据已定义');
+        const achievementKeys = Object.keys(win.ACHIEVEMENTS);
+        assert(achievementKeys.length === 17, '3.2 成就总数为17个', `实际: ${achievementKeys.length}`);
+
+        // Verify all categories
+        const categories = new Set(achievementKeys.map(k => win.ACHIEVEMENTS[k].category));
+        assert(categories.has('learning'), '3.3 有学习成就类别');
+        assert(categories.has('quantity'), '3.4 有数量成就类别');
+        assert(categories.has('accuracy'), '3.5 有正确率成就类别');
+        assert(categories.has('review'), '3.6 有复习成就类别');
+        assert(categories.has('special'), '3.7 有特别成就类别');
+
+        // Verify achievement structure
+        let allAchievementsValid = true;
+        achievementKeys.forEach(key => {
+            const a = win.ACHIEVEMENTS[key];
+            if (!a.name || !a.icon || !a.desc || !a.category || typeof a.condition !== 'function') {
+                allAchievementsValid = false;
+            }
+        });
+        assert(allAchievementsValid, '3.8 所有成就字段完整且condition为函数');
+
+        // ===== 4. STATE MANAGEMENT TESTS =====
+        results.tests.push({ name: '--- 状态管理测试 ---', status: 'SECTION' });
+
+        assert(typeof win.state !== 'undefined', '4.1 应用状态已定义');
+        assert(typeof win.loadState === 'function', '4.2 loadState函数已定义');
+        assert(typeof win.saveState === 'function', '4.3 saveState函数已定义');
+
+        // Test localStorage integration
+        try {
+            win.saveState();
+            const saved = localStorage.getItem('englishVocabState');
+            assert(saved !== null, '4.4 状态可保存到localStorage');
+
+            const parsed = JSON.parse(saved);
+            assert(parsed !== null && typeof parsed === 'object', '4.5 保存的状态可解析为对象');
+        } catch (e) {
+            assert(false, '4.4 状态可保存到localStorage', `错误: ${e.message}`);
+        }
+
+        // ===== 5. FUNCTIONAL TESTS =====
+        results.tests.push({ name: '--- 功能逻辑测试 ---', status: 'SECTION' });
+
+        // 5.1 Tab switching
+        assert(typeof win.switchTab === 'function', '5.1 switchTab函数已定义');
+
+        win.switchTab('learn');
+        const learnActive = doc.querySelector('#tab-learn.active');
+        assert(learnActive !== null, '5.2 切换到学习Tab后该Tab激活');
+        const homeNotActive = doc.querySelector('#tab-home.active');
+        assert(homeNotActive === null, '5.3 切换后首页Tab不再激活');
+
+        // Test all tabs
+        ['home', 'test', 'achievements', 'profile'].forEach(tab => {
+            win.switchTab(tab);
+            const active = doc.querySelector(`#tab-${tab}.active`);
+            assert(active !== null, `5.${tab === 'test' ? '4' : tab === 'achievements' ? '5' : tab === 'profile' ? '6' : '7'} Tab切换-${tab}正常`);
+        });
+        // Restore home
+        win.switchTab('home');
+
+        // 5.2 Word card navigation
+        assert(typeof win.prevWord === 'function', '5.8 prevWord函数已定义');
+        assert(typeof win.nextWord === 'function', '5.9 nextWord函数已定义');
+        assert(typeof win.flipCard === 'function', '5.10 flipCard函数已定义');
+
+        // Navigate to end
+        win.state.currentWordIndex = 0;
+        win.updateWordCard();
+        let counterText = doc.getElementById('wordCounter').textContent;
+        assert(counterText === '1/' + win.VOCABULARY.length, '5.11 第一张卡片计数器正确', `实际: ${counterText}`);
+
+        // Test prev disabled at start
+        assert(doc.getElementById('prevWord').disabled === true, '5.12 第一张卡片时上一词按钮禁用');
+
+        // Navigate forward
+        win.nextWord();
+        counterText = doc.getElementById('wordCounter').textContent;
+        assert(counterText === '2/' + win.VOCABULARY.length, '5.13 向后翻页计数器更新正确', `实际: ${counterText}`);
+        assert(doc.getElementById('prevWord').disabled === false, '5.14 第二张卡片时上一词按钮可用');
+
+        // Navigate to last
+        win.state.currentWordIndex = win.VOCABULARY.length - 1;
+        win.updateWordCard();
+        assert(doc.getElementById('nextWord').disabled === true, '5.15 最后一张卡片时下一词按钮禁用');
+
+        // 5.3 Card flip
+        win.state.currentWordIndex = 0;
+        win.updateWordCard();
+        const card = doc.getElementById('wordCard');
+        assert(!card.classList.contains('flipped'), '5.16 卡片初始状态未翻转');
+        win.flipCard();
+        assert(card.classList.contains('flipped'), '5.17 点击后卡片翻转');
+        win.flipCard();
+        assert(!card.classList.contains('flipped'), '5.18 再次点击卡片翻回');
+
+        // 5.4 Favorite toggle
+        assert(typeof win.toggleFavorite === 'function', '5.19 toggleFavorite函数已定义');
+        win.state.currentWordIndex = 0;
+        // Remove from favorites first if present
+        const favIdx = win.state.favorites.indexOf('abandon');
+        if (favIdx !== -1) win.state.favorites.splice(favIdx, 1);
+        win.updateWordCard();
+        win.toggleFavorite();
+        assert(win.state.favorites.includes('abandon'), '5.20 收藏功能-添加收藏成功');
+        win.updateWordCard();
+        const favBtnStar = doc.getElementById('btnFavorite').querySelector('span:first-child').textContent;
+        assert(favBtnStar === '⭐', '5.21 收藏后图标变为实心星', `实际: ${favBtnStar}`);
+
+        win.toggleFavorite();
+        assert(!win.state.favorites.includes('abandon'), '5.22 取消收藏功能正常');
+        // Clean up
+        win.state.favorites = [];
+
+        // 5.5 Mark as learned
+        assert(typeof win.markAsLearned === 'function', '5.23 markAsLearned函数已定义');
+        win.state.currentWordIndex = 0;
+        // Reset word state
+        delete win.state.words['abandon'];
+        win.updateWordCard();
+        win.markAsLearned();
+        assert(win.state.words['abandon'] && win.state.words['abandon'].learned === true, '5.24 标记已掌握功能正常');
+        assert(win.state.words['abandon'].mastery === 1, '5.25 初次掌握mastery值为1');
+
+        // Clean up
+        delete win.state.words['abandon'];
+
+        // 5.6 Spelling mode
+        assert(typeof win.setLearnMode === 'function', '5.26 setLearnMode函数已定义');
+        assert(typeof win.initSpellingMode === 'function', '5.27 initSpellingMode函数已定义');
+        assert(typeof win.checkSpelling === 'function', '5.28 checkSpelling函数已定义');
+
+        // 5.7 Test mode
+        assert(typeof win.startTest === 'function', '5.29 startTest函数已定义');
+        assert(typeof win.setTestCount === 'function', '5.30 setTestCount函数已定义');
+
+        // Test count defaults
+        assert(win.state.testCount === 10, '5.31 默认测试题数为10');
+
+        // 5.8 Review mode
+        assert(typeof win.initReviewMode === 'function', '5.32 initReviewMode函数已定义');
+
+        // 5.9 Dictation mode
+        assert(typeof win.initDictationMode === 'function', '5.33 initDictationMode函数已定义');
+        assert(typeof win.playDictation === 'function', '5.34 playDictation函数已定义');
+
+        // 5.10 Calendar
+        assert(typeof win.updateCalendar === 'function', '5.35 updateCalendar函数已定义');
+        const calendar = doc.getElementById('calendar');
+        assert(calendar.children.length > 0, '5.36 日历已渲染内容');
+
+        // 5.11 Speech synthesis
+        assert(typeof win.speak === 'function', '5.37 speak发音函数已定义');
+        assert(typeof win.playAudio === 'function', '5.38 playAudio函数已定义');
+
+        // 5.12 Data export/reset
+        assert(typeof win.exportData === 'function', '5.39 exportData导出函数已定义');
+        assert(typeof win.resetProgress === 'function', '5.40 resetProgress重置函数已定义');
+
+        // 5.13 Wrong answers / favorites management
+        assert(typeof win.updateWrongAnswersList === 'function', '5.41 updateWrongAnswersList函数已定义');
+        assert(typeof win.updateFavoritesList === 'function', '5.42 updateFavoritesList函数已定义');
+        assert(typeof win.removeFromWrong === 'function', '5.43 removeFromWrong函数已定义');
+        assert(typeof win.removeFavorite === 'function', '5.44 removeFavorite函数已定义');
+
+        // 5.14 Achievement system
+        assert(typeof win.checkAchievements === 'function', '5.45 checkAchievements函数已定义');
+        assert(typeof win.showAchievementPopup === 'function', '5.46 showAchievementPopup函数已定义');
+        assert(typeof win.closeAchievementPopup === 'function', '5.47 closeAchievementPopup函数已定义');
+
+        // 5.15 Profile functions
+        assert(typeof win.updateProfileStats === 'function', '5.48 updateProfileStats函数已定义');
+        assert(typeof win.toggleReminder === 'function', '5.49 toggleReminder函数已定义');
+        assert(typeof win.updateTTSSpeed === 'function', '5.50 updateTTSSpeed函数已定义');
+        assert(typeof win.updateDailyGoal === 'function', '5.51 updateDailyGoal函数已定义');
+
+        // ===== 6. BUG DETECTION TESTS =====
+        results.tests.push({ name: '--- Bug检测测试 ---', status: 'SECTION' });
+
+        // BUG 1: Test count button - "15题" button has data-count="10" instead of data-count="15"
+        const testCountBtns = doc.querySelectorAll('[data-count]');
+        let bug1Found = false;
+        testCountBtns.forEach(btn => {
+            if (btn.textContent.trim() === '15题' && btn.dataset.count !== '15') {
+                bug1Found = true;
+            }
+        });
+        assert(!bug1Found, '6.1 [BUG] 测试题数按钮data-count属性与显示文本一致');
+        if (bug1Found) {
+            addBug('HIGH', '"15题"按钮的data-count属性值为"10"而非"15"，导致点击15题实际选择的是10题', 'HTML line ~1355: <button class="mode-btn" data-count="10" onclick="setTestCount(10)">15题</button>');
+        }
+
+        // BUG 2: showAchievementIfUnlocked called in toggleFavorite but not defined
+        assert(typeof win.showAchievementIfUnlocked === 'function', '6.2 [BUG] toggleFavorite中调用的showAchievementIfUnlocked函数已定义');
+        if (typeof win.showAchievementIfUnlocked !== 'function') {
+            addBug('HIGH', 'toggleFavorite()中调用了showAchievementIfUnlocked(\'favorites_added\')，但该函数未定义，会导致运行时错误', 'JS line ~2002: showAchievementIfUnlocked(\'favorites_added\')');
+        }
+
+        // BUG 3: changeMonth function doesn't actually change the month
+        assert(typeof win.changeMonth === 'function', '6.3 changeMonth函数已定义');
+        warn(false, '6.4 [BUG] changeMonth(delta)函数不实际切换月份，参数delta未使用', 'changeMonth函数忽略delta参数，总是重新渲染当前月份');
+
+        // BUG 4: updateStreak logic issue - always increments streak when lastStudyDate === yesterday
+        const streakTestState = JSON.parse(JSON.stringify(win.state));
+        // Simulate: if lastStudyDate === yesterday, streak increments every time updateStreak is called
+        // This means refreshing the page when lastStudyDate === yesterday will keep incrementing
+        warn(false, '6.5 [BUG] updateStreak连续天数逻辑问题 - 当lastStudyDate===yesterday时每次调用都会streak++', '每天多次刷新页面可能导致连续天数虚增');
+
+        // BUG 5: completedDays never properly tracked
+        warn(false, '6.6 [BUG] completedDays只在updateStreak中递增，但逻辑上不正确', 'completedDays应该在有实际学习行为时递增，而非在streak更新时');
+
+        // BUG 6: state initialization - duplicate state.startDate assignment
+        const initCode = win.init.toString();
+        const duplicateStart = (initCode.match(/state\.startDate\s*=/g) || []).length;
+        assert(duplicateStart <= 2 || duplicateStart === 2, '6.7 init函数中state.startDate赋值检查', `出现${duplicateStart}次赋值（含条件检查），存在冗余赋值`);
+        if (duplicateStart > 2) {
+            addBug('LOW', 'init函数中state.startDate存在重复赋值', 'JS line ~1719-1721');
+        }
+
+        // BUG 7: selectAnswer compares by meaning text - possible issue with special characters in meanings
+        assert(typeof win.selectAnswer === 'function', '6.8 selectAnswer函数已定义');
+
+        // BUG 8: Test count selection - 5 and 20 options use correct data-count but only 5,10,20 are available in data-count
+        const testCounts = new Set();
+        doc.querySelectorAll('[data-count]').forEach(btn => {
+            testCounts.add(parseInt(btn.dataset.count));
+        });
+        assert(testCounts.has(5), '6.9 有5题选项');
+        assert(testCounts.has(10), '6.10 有10题选项');
+        assert(testCounts.has(20), '6.11 有20题选项');
+        // 15题 button has data-count=10, so 15 won't appear in testCounts
+        warn(testCounts.has(15), '6.12 [BUG] 有15题选项（data-count=15）', '15题按钮的data-count被错误设为10');
+
+        // BUG 9: showSpellingComplete destroys mode-spelling HTML, making it impossible to restart
+        warn(false, '6.13 [BUG] showSpellingComplete会替换mode-spelling的innerHTML', '拼写完成后mode-spelling的原始HTML被覆盖，再次调用setLearnMode("spelling")时initSpellingMode依赖的spellingInput等元素不存在');
+
+        // BUG 10: Achievement count shows 17 but only 17 defined - verify consistency
+        assert(Object.keys(win.ACHIEVEMENTS).length === 17, '6.14 成就数量与UI显示一致（17个）');
+
+        // ===== 7. UI RENDERING TESTS =====
+        results.tests.push({ name: '--- UI渲染测试 ---', status: 'SECTION' });
+
+        // 7.1 Home stats initial values
+        win.switchTab('home');
+        win.updateHomeStats();
+        const daysLeft = doc.getElementById('daysLeft').textContent;
+        assert(/^\d+$/.test(daysLeft), '7.1 倒计时显示为数字', `实际值: ${daysLeft}`);
+        const daysNum = parseInt(daysLeft);
+        assert(daysNum >= 0 && daysNum <= 40, '7.2 倒计时在0-40范围内', `实际值: ${daysNum}`);
+
+        // 7.3 Word card displays first word correctly
+        win.state.currentWordIndex = 0;
+        win.updateWordCard();
+        assert(doc.getElementById('displayWord').textContent === 'abandon', '7.3 第一张卡片显示abandon');
+        assert(doc.getElementById('displayPhonetic').textContent === '/əˈbændən/', '7.4 音标显示正确');
+        assert(doc.getElementById('displayMeaning').textContent === '放弃；遗弃', '7.5 释义显示正确');
+
+        // 7.4 Achievement rendering
+        win.switchTab('achievements');
+        win.updateAchievements();
+        const learningCards = doc.getElementById('achievementLearning').children.length;
+        assert(learningCards > 0, '7.6 学习成就卡片已渲染', `数量: ${learningCards}`);
+
+        // Check achievement count display
+        const achieveCountText = doc.getElementById('achievementCount').textContent;
+        assert(achieveCountText.includes('/17'), '7.7 成就计数显示格式正确', `实际: ${achieveCountText}`);
+
+        // 7.5 Profile rendering
+        win.switchTab('profile');
+        win.updateProfileStats();
+        assert(doc.getElementById('profileDays').textContent !== '', '7.8 学习天数已渲染');
+        assert(doc.getElementById('dailyGoalDisplay').textContent.includes('词'), '7.9 每日目标显示格式正确', `实际: ${doc.getElementById('dailyGoalDisplay').textContent}`);
+
+        // ===== 8. RESPONSIVE / CSS TESTS =====
+        results.tests.push({ name: '--- 样式和响应式测试 ---', status: 'SECTION' });
+
+        // Check viewport meta tag
+        const viewport = doc.querySelector('meta[name="viewport"]');
+        assert(viewport !== null, '8.1 viewport meta标签存在');
+        assert(viewport.content.includes('width=device-width'), '8.2 viewport设置包含width=device-width');
+
+        // Check bottom nav position
+        const bottomNav = doc.querySelector('.bottom-nav');
+        const navStyle = win.getComputedStyle(bottomNav);
+        assert(navStyle.position === 'fixed', '8.3 底部导航为fixed定位');
+        assert(navStyle.bottom === '0px', '8.4 底部导航贴底');
+
+        // Check header sticky
+        const header = doc.querySelector('.header');
+        const headerStyle = win.getComputedStyle(header);
+        assert(headerStyle.position === 'sticky' || headerStyle.position === '-webkit-sticky', '8.5 头部为sticky定位');
+
+        // ===== 9. EDGE CASE TESTS =====
+        results.tests.push({ name: '--- 边界条件测试 ---', status: 'SECTION' });
+
+        // 9.1 Empty favorites list
+        win.state.favorites = [];
+        win.updateFavoritesList();
+        const favEmpty = doc.getElementById('favoritesList').querySelector('.empty-state');
+        assert(favEmpty !== null, '9.1 空收藏夹显示空状态提示');
+
+        // 9.2 Empty wrong answers
+        win.state.wrongAnswers = {};
+        win.updateWrongAnswersList();
+        const wrongEmpty = doc.getElementById('wrongAnswersList').querySelector('.empty-state');
+        assert(wrongEmpty !== null, '9.2 空错题本显示空状态提示');
+
+        // 9.3 Boundary word navigation
+        win.state.currentWordIndex = 0;
+        win.updateWordCard();
+        win.prevWord(); // Should stay at 0
+        assert(win.state.currentWordIndex === 0, '9.3 边界-第一张卡片不能再往前翻');
+
+        win.state.currentWordIndex = win.VOCABULARY.length - 1;
+        win.updateWordCard();
+        win.nextWord(); // Should stay at last
+        assert(win.state.currentWordIndex === win.VOCABULARY.length - 1, '9.4 边界-最后一张卡片不能再往后翻');
+
+        // 9.4 Test with vocabulary that has special characters in meaning
+        const specialWord = win.VOCABULARY.find(w => w.meaning.includes('；'));
+        assert(specialWord !== undefined, '9.5 存在含中文分号的释义', `示例: ${specialWord ? specialWord.word + ' - ' + specialWord.meaning : '无'}`);
+
+        // 9.5 Check selectAnswer with meanings containing quotes
+        warn(false, '9.6 [BUG] selectAnswer使用字符串拼接传递meaning，含单引号/特殊字符的释义可能导致问题', 'selectAnswer(\'${opt}\', \'${question.meaning}\', this) 使用了字符串模板，如果meaning包含单引号会导致JS语法错误');
+
+        // ===== 10. PERFORMANCE TESTS =====
+        results.tests.push({ name: '--- 性能测试 ---', status: 'SECTION' });
+
+        // 10.1 Vocabulary data size check
+        const vocabStr = JSON.stringify(win.VOCABULARY);
+        const vocabSizeKB = new Blob([vocabStr]).size / 1024;
+        assert(vocabSizeKB < 50, '10.1 词汇数据体积合理', `${vocabSizeKB.toFixed(1)} KB`);
+
+        // 10.2 Total page size
+        const totalSizeKB = new Blob([doc.documentElement.outerHTML]).size / 1024;
+        assert(totalSizeKB < 500, '10.2 页面总体积合理', `${totalSizeKB.toFixed(1)} KB`);
+
+        // ===== CLEANUP =====
+        // Reset state
+        win.state.currentWordIndex = 0;
+        win.state.favorites = [];
+        win.state.wrongAnswers = {};
+        win.switchTab('home');
+
+        // Generate report
+        generateReport();
+    }
+
+    function generateReport() {
+        const container = document.getElementById('results');
+        let html = '';
+
+        // Summary
+        const total = results.passed + results.failed + results.warnings;
+        const passRate = total > 0 ? ((results.passed / total) * 100).toFixed(1) : 0;
+
+        html += `<div class="summary">`;
+        html += `<h2>测试总结</h2>`;
+        html += `<p>总测试数: <strong>${total}</strong> | 通过: <span class="pass"><strong>${results.passed}</strong></span> | 失败: <span class="fail"><strong>${results.failed}</strong></span> | 警告: <span class="warn"><strong>${results.warnings}</strong></span></p>`;
+        html += `<p>通过率: <strong>${passRate}%</strong></p>`;
+        html += `<p>Bug数量: <strong class="fail">${results.bugs.length}</strong></p>`;
+        html += `</div>`;
+
+        // Verdict
+        const criticalBugs = results.bugs.filter(b => b.severity === 'HIGH').length;
+        let verdict = '通过';
+        let verdictClass = 'pass';
+        if (criticalBugs > 0) {
+            verdict = '不通过';
+            verdictClass = 'fail';
+        } else if (results.bugs.length > 0) {
+            verdict = '有条件通过';
+            verdictClass = 'warn';
+        }
+        html += `<div class="summary" style="border-left: 4px solid ${verdictClass === 'pass' ? '#4CAF50' : verdictClass === 'fail' ? '#F44336' : '#FF9800'}">`;
+        html += `<p>最终判定: <strong class="${verdictClass}">${verdict}</strong></p>`;
+        html += `</div>`;
+
+        // Test details
+        html += `<h2>测试详情</h2>`;
+        results.tests.forEach(t => {
+            if (t.status === 'SECTION') {
+                html += `<h2>${t.name}</h2>`;
+            } else {
+                const cls = t.status === 'PASS' ? 'pass' : t.status === 'FAIL' ? 'fail' : 'warn';
+                const icon = t.status === 'PASS' ? '✓' : t.status === 'FAIL' ? '✗' : '⚠';
+                html += `<div class="test-item"><span class="${cls}">${icon}</span> ${t.name} ${t.detail ? `<span class="info">— ${t.detail}</span>` : ''}</div>`;
+            }
+        });
+
+        // Bugs
+        if (results.bugs.length > 0) {
+            html += `<h2>发现的Bug</h2>`;
+            results.bugs.forEach((b, i) => {
+                html += `<div class="bug">`;
+                html += `<p><strong>[${b.severity}] Bug #${i + 1}:</strong> ${b.description}</p>`;
+                html += `<p class="info">位置: ${b.location}</p>`;
+                html += `</div>`;
+            });
+        }
+
+        // Recommendations
+        if (results.bugs.length > 0) {
+            html += `<h2>修复建议</h2>`;
+            html += `<div class="summary">`;
+            html += `<ol style="line-height: 2;">`;
+
+            if (results.bugs.find(b => b.description.includes('showAchievementIfUnlocked'))) {
+                html += `<li><strong>[HIGH]</strong> 删除toggleFavorite中的showAchievementIfUnlocked调用，或定义该函数。建议直接删除该行，因为收藏功能不需要成就检测。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('15题') && b.description.includes('data-count'))) {
+                html += `<li><strong>[HIGH]</strong> 将15题按钮的data-count从"10"改为"15"，onclick的setTestCount参数也从10改为15。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('changeMonth'))) {
+                html += `<li><strong>[MEDIUM]</strong> 实现changeMonth函数，使用delta参数更新当前显示的月份，而非仅重新渲染当前月。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('updateStreak'))) {
+                html += `<li><strong>[MEDIUM]</strong> 修复updateStreak逻辑：只在当天首次有学习行为时递增streak，避免刷新页面导致虚增。建议使用"今天是否已学习过"标记。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('showSpellingComplete'))) {
+                html += `<li><strong>[MEDIUM]</strong> 修复showSpellingComplete，不应直接替换innerHTML。改用隐藏/显示方式或确保setLearnMode('spelling')能重建DOM。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('单引号'))) {
+                html += `<li><strong>[MEDIUM]</strong> selectAnswer使用字符串拼接传递meaning，建议改用data属性或事件委托避免XSS/语法错误风险。</li>`;
+            }
+            if (results.bugs.find(b => b.description.includes('completedDays'))) {
+                html += `<li><strong>[LOW]</strong> completedDays应在用户完成每日目标时递增，而非在streak更新时。</li>`;
+            }
+
+            html += `</ol></div>`;
+        }
+
+        container.innerHTML = html;
+        console.log('Test completed. Passed:', results.passed, 'Failed:', results.failed, 'Warnings:', results.warnings);
+    }
+
+    // Wait for iframe to load
+    window.addEventListener('load', () => {
+        setTimeout(runTests, 500);
+    });
+    </script>
+</body>
+</html>
