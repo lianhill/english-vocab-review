@@ -178,34 +178,19 @@ initDictationMode = function() {
     state.dictationWords = shuffled.slice(0, Math.min(10, shuffled.length));
     state.dictationIndex = 0;
     if (state.dictationWords.length > 0) {
-        showDictationWord();
+        // 更新听写界面初始状态
+        const statusEl = document.getElementById('dictationStatus');
+        const answerEl = document.getElementById('dictationAnswer');
+        if (statusEl) statusEl.textContent = '点击播放按钮听写';
+        if (answerEl) answerEl.style.display = 'none';
     }
 };
 
 // 修改复习模式使用筛选后的单词
 const originalInitReviewMode = initReviewMode;
 initReviewMode = function() {
-    const today = getTodayStr();
-    const dueWords = VOCABULARY.filter(w => {
-        const wordState = state.words[w.word];
-        return wordState && wordState.nextReview && wordState.nextReview <= today;
-    });
-    
-    const shuffled = dueWords.sort(() => Math.random() - 0.5);
-    state.spellingWords = shuffled.slice(0, Math.min(10, shuffled.length));
-    state.spellingIndex = 0;
-    
-    if (state.spellingWords.length > 0) {
-        showReviewWord();
-    } else {
-        document.getElementById('mode-review').innerHTML = `
-            <div class="card text-center" style="padding: 48px;">
-                <div style="font-size: 64px;">🎉</div>
-                <h2 class="mt-16">太棒了!</h2>
-                <p class="mt-8 text-secondary">暂时没有需要复习的单词</p>
-            </div>
-        `;
-    }
+    // 直接调用原始复习模式（它会自己筛选due words）
+    originalInitReviewMode();
 };
 
 // 测试模式：添加按Day筛选
