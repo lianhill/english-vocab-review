@@ -4024,7 +4024,10 @@ const IRREGULAR_VERBS = [
         }
 
         function toggleFavorite() {
-            const word = VOCABULARY[state.currentWordIndex].word;
+            const words = state.currentWords || getFilteredWords();
+            const currentWord = words[state.currentWordIndex];
+            if (!currentWord) return;
+            const word = currentWord.word;
             const index = state.favorites.indexOf(word);
             
             if (index === -1) {
@@ -4038,7 +4041,10 @@ const IRREGULAR_VERBS = [
         }
 
         function markAsLearned() {
-            const word = VOCABULARY[state.currentWordIndex].word;
+            const words = state.currentWords || getFilteredWords();
+            const currentWord = words[state.currentWordIndex];
+            if (!currentWord) return;
+            const word = currentWord.word;
             const today = getTodayStr();
             
             if (!state.words[word]) {
@@ -4074,7 +4080,8 @@ const IRREGULAR_VERBS = [
             checkAchievements();
             
             // 自动跳转到下一个单词
-            if (state.currentWordIndex < VOCABULARY.length - 1) {
+            const wordsArr = state.currentWords || getFilteredWords();
+            if (state.currentWordIndex < wordsArr.length - 1) {
                 setTimeout(() => {
                     nextWord();
                 }, 300);
@@ -4091,18 +4098,72 @@ const IRREGULAR_VERBS = [
 
         // 发音功能
         function playAudio() {
-            const word = VOCABULARY[state.currentWordIndex].word;
-            speak(word);
+            const words = state.currentWords || getFilteredWords();
+            const word = words[state.currentWordIndex];
+            if (word) speak(word.word);
         }
 
-        function speak(text) {
+        // ==========================================
+        // TTS 语音播放（移动端兼容版）
+        // ==========================================
+        let _ttsUnlocked = false;
+
+        // 移动端首次用户手势时解锁 speechSynthesis
+        function _unlockTTS() {
+            if (_ttsUnlocked) return;
             if ('speechSynthesis' in window) {
+                // 用一个空 utterance 激活引擎（iOS 必须在手势链内）
+                const u = new SpeechSynthesisUtterance('');
+                u.volume = 0;
+                speechSynthesis.speak(u);
+                _ttsUnlocked = true;
+            }
+        }
+        // 在第一次任意触摸时解锁
+        document.addEventListener('touchstart', _unlockTTS, { once: true, passive: true });
+        document.addEventListener('click', _unlockTTS, { once: true });
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+
+            // 取消当前播放
+            speechSynthesis.cancel();
+
+            function _doSpeak() {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
-                utterance.rate = state.settings.ttsSpeed;
+                utterance.rate = state.settings.ttsSpeed || 0.8;
+                utterance.pitch = 1;
                 utterance.volume = 1;
-                speechSynthesis.cancel();
+
+                // 优先选英语语音
+                const voices = speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    const enVoice = voices.find(v => v.lang.startsWith('en-US')) ||
+                                    voices.find(v => v.lang.startsWith('en'));
+                    if (enVoice) utterance.voice = enVoice;
+                }
+
                 speechSynthesis.speak(utterance);
+            }
+
+            // iOS 上 cancel() 后需稍等再 speak，否则可能无声
+            const voices = speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                // 语音列表还未加载，等待 voiceschanged（防止重复触发）
+                let _spoken = false;
+                const handler = () => {
+                    if (_spoken) return;
+                    _spoken = true;
+                    speechSynthesis.removeEventListener('voiceschanged', handler);
+                    _doSpeak();
+                };
+                speechSynthesis.addEventListener('voiceschanged', handler);
+                // 超时兜底：300ms 后强制播放（Android 有时不触发 voiceschanged）
+                setTimeout(() => { if (!_spoken) { _spoken = true; _doSpeak(); } }, 300);
+            } else {
+                // 已有语音列表，iOS cancel 后给 50ms 缓冲
+                setTimeout(_doSpeak, 50);
             }
         }
 
