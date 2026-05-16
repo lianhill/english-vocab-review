@@ -3871,7 +3871,7 @@ const IRREGULAR_VERBS = [
         // ==========================================
         
         // 当前选中的Day（0表示全部）
-        let selectedDay = 0;
+        let selectedDay = state.selectedDay || 0;
         
         // 渲染Day选择按钮
         function renderDayFilterButtons() {
@@ -3896,6 +3896,8 @@ const IRREGULAR_VERBS = [
         // 选择Day
         function selectDay(day) {
             selectedDay = day;
+            state.selectedDay = day; // 同步到 state
+            state.currentDayFilter = day; // 同步到 day-filter.js 使用的状态
             renderDayFilterButtons();
             
             // 根据当前模式刷新
